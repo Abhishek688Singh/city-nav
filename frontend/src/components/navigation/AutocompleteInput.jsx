@@ -24,7 +24,7 @@ export default function AutocompleteInput({ value, onChange, cityId, placeholder
   }, []);
 
   const search = useCallback(async (q) => {
-    if (q.length < 2) { setSuggestions([]); setOpen(false); return; }
+    if (q.length < 2 || !cityId) { setSuggestions([]); setOpen(false); return; }
     setLoading(true);
     try {
       const res = await locationsApi.autocomplete(cityId, q);

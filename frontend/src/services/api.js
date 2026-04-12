@@ -99,9 +99,24 @@ export const adminApi = {
   stats: () => api.get('/admin/stats'),
   users: (params) => api.get('/admin/users', { params }),
   toggleUser: (id) => api.put(`/admin/users/${id}/toggle`),
+  cities: {
+    getAll: (params) => api.get('/admin/cities', { params }),
+    create: (data) => api.post('/admin/cities', data),
+    update: (id, data) => api.put(`/admin/cities/${id}`, data),
+    delete: (id) => api.delete(`/admin/cities/${id}`),
+    toggle: (id) => api.put(`/admin/cities/${id}/toggle`),
+  },
+  fares: {
+    getAll: (params) => api.get('/admin/fares', { params }),
+    create: (data) => api.post('/admin/fares', data),
+    update: (id, data) => api.put(`/admin/fares/${id}`, data),
+    delete: (id) => api.delete(`/admin/fares/${id}`),
+  },
+  routes: {
+    getAll: (params) => api.get('/admin/routes', { params }),
+    create: (data) => api.post('/admin/routes', data),
+    update: (id, data) => api.put(`/admin/routes/${id}`, data),
+    delete: (id) => api.delete(`/admin/routes/${id}`),
+  },
   auditLogs: () => api.get('/admin/audit-logs'),
-  getRoutes: (params) => api.get('/admin/routes', { params }),
-  createRoute: (data) => api.post('/admin/routes', data),
-  updateRoute: (id, data) => api.put(`/admin/routes/${id}`, data),
-  deleteRoute: (id) => api.delete(`/admin/routes/${id}`),
 };

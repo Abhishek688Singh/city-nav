@@ -6,7 +6,7 @@ const AuditLog = require('../models/AuditLog');
 const RouteEdge = require('../models/RouteEdge');
 
 const logAction = (adminId, action, entityType, entityId, changes, ip) =>
-  AuditLog.create({ admin: adminId, action, entityType, entityId, changes, ipAddress: ip });
+  AuditLog.create({ admin: adminId, action, targetType: entityType, targetId: entityId, details: changes, ipAddress: ip });
 
 // GET /api/admin/stats
 exports.getDashboardStats = async (req, res, next) => {

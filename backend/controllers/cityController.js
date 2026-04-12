@@ -8,7 +8,6 @@ exports.getCities = async (req, res, next) => {
     if (search) query.$text = { $search: search };
 
     const cities = await City.find(query).sort({ name: 1 });
-    console.log("cities:", cities)
     res.json({ success: true, count: cities.length, cities });
   } catch (err) { next(err); }
 };

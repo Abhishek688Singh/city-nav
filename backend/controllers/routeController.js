@@ -10,16 +10,18 @@ const fareService = require('../services/fareService');
 /**
  * Resolve a location by name or ID within a city.
  */
+const delay = (ms) => new Promise(res => setTimeout(res, ms));
+
 async function resolveLocation(nameOrId, cityId) {
   let loc = null;
 
-  // Try ObjectId
+  // 🔹 1. Try ObjectId
   if (/^[0-9a-fA-F]{24}$/.test(nameOrId)) {
     loc = await Location.findById(nameOrId);
     if (loc) return loc;
   }
 
-  // Try DB match
+  // 🔹 2. Try DB match
   loc = await Location.findOne({
     city: cityId,
     isActive: true,
@@ -29,47 +31,56 @@ async function resolveLocation(nameOrId, cityId) {
     ]
   });
 
-  if (loc) return loc;
+  // ✅ If found in DB → RETURN (NO API CALL)
+  if (loc && loc.coordinates?.lat && loc.coordinates?.lng) {
+    return loc;
+  }
 
-  console.log("Searching:", nameOrId);
+  console.log("Searching (API):", nameOrId);
 
-  // 🔥 FALLBACK → Nominatim
-  
-    const url = `https://nominatim.openstreetmap.org/search?q=${nameOrId}&format=json&limit=1`;
+  // 🔥 3. RATE LIMIT PROTECTION
+  await delay(1000); // prevent "too many requests"
 
-try {
-  const res = await fetch(url, {
-    headers: {
-      'User-Agent': 'city-nav-app'
-    }
-  });
+  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(nameOrId)}&format=json&limit=1`;
 
-  const text = await res.text(); // 🔥 read as text first
-
-  if (!text) return null;
-
-  let data;
   try {
-    data = JSON.parse(text);
-  } catch {
-    console.log("Invalid JSON from Nominatim:", text);
-    return null;
-  }
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': 'city-nav-app (your-email@example.com)'
+      }
+    });
 
-  if (data && data[0]) {
-    return {
-      _id: null,
-      name: nameOrId,
-      coordinates: {
-        lat: parseFloat(data[0].lat),
-        lng: parseFloat(data[0].lon)
-      },
-      isDynamic: true
-    };
+    const text = await res.text();
+    if (!text) return null;
+
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      console.log("Invalid JSON:", text);
+      return null;
+    }
+
+    if (data && data[0]) {
+      const lat = parseFloat(data[0].lat);
+      const lng = parseFloat(data[0].lon);
+
+      // 🔥 4. SAVE TO DB (CACHE)
+      const newLoc = await Location.create({
+        name: nameOrId,
+        city: cityId,
+        coordinates: { lat, lng },
+        type: "dynamic",
+        isActive: true,
+        aliases: []
+      });
+
+      return newLoc; // ✅ Next time → no API call
+    }
+
+  } catch (err) {
+    console.error("Nominatim error:", err);
   }
-} catch (err) {
-  console.error("Nominatim error:", err);
-}
 
   return null;
 }
